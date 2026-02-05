@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Support Ticket System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Support Ticket System</h1>
+        <button id="modeToggle">Switch to Admin Mode</button>
+
+        <div class="card form-section" id="formSection">
+            <h2>Raise a Ticket</h2>
+            <form id="ticketForm">
+                <input type="text" id="username" placeholder="Your Name" required>
+                <textarea id="issue" placeholder="Describe your issue..." required></textarea>
+                <button type="submit">Submit Ticket</button>
+            </form>
+        </div>
+
+        <div class="card list-section">
+            <h2>Your Tickets</h2>
+            <div id="ticketList">
+                <!-- Tickets will be injected here -->
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
