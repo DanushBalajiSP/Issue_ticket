@@ -1,26 +1,18 @@
 const express = require('express');
 const cors = require('cors');
-const { initDb } = require('./database');
+const { connectDB, Ticket } = require('./database');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-
-let db;
+app.use(express.static('.')); // Serve static files (index.html, script.js)
 
 // Initialize Database connection
-// This ensures the table exists before the server accepts requests
-(async () => {
-    try {
-        db = await initDb();
-        console.log('Database initialized');
-    } catch (err) {
-        console.error('Failed to initialize database:', err);
-    }
-})();
+connectDB();
 
 // --- API Routes ---
 
@@ -28,7 +20,7 @@ let db;
 // Fetch all tickets, sorted by newest first
 app.get('/tickets', async (req, res) => {
     try {
-        const tickets = await db.all('SELECT * FROM tickets ORDER BY created_at DESC');
+        const tickets = await Ticket.find().sort({ created_at: -1 });
         res.json(tickets);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -42,11 +34,8 @@ app.post('/tickets', async (req, res) => {
         return res.status(400).json({ error: 'User and Issue are required' });
     }
     try {
-        const result = await db.run(
-            'INSERT INTO tickets (user, issue) VALUES (?, ?)',
-            [user, issue]
-        );
-        const newTicket = await db.get('SELECT * FROM tickets WHERE id = ?', result.lastID);
+        const newTicket = new Ticket({ user, issue });
+        await newTicket.save();
         res.status(201).json(newTicket);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -56,7 +45,7 @@ app.post('/tickets', async (req, res) => {
 // Delete a ticket
 app.delete('/tickets/:id', async (req, res) => {
     try {
-        await db.run('DELETE FROM tickets WHERE id = ?', req.params.id);
+        await Ticket.findByIdAndDelete(req.params.id);
         res.json({ message: 'Ticket deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -70,11 +59,11 @@ app.put('/tickets/:id/resolve', async (req, res) => {
         return res.status(400).json({ error: 'Response is required' });
     }
     try {
-        await db.run(
-            "UPDATE tickets SET response = ?, status = 'Resolved' WHERE id = ?",
-            [response, req.params.id]
+        const updatedTicket = await Ticket.findByIdAndUpdate(
+            req.params.id,
+            { response, status: 'Resolved' },
+            { new: true } // Return the updated document
         );
-        const updatedTicket = await db.get('SELECT * FROM tickets WHERE id = ?', req.params.id);
         res.json(updatedTicket);
     } catch (err) {
         res.status(500).json({ error: err.message });

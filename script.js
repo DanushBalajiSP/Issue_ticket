@@ -36,19 +36,22 @@ function renderTickets() {
         const div = document.createElement('div');
         div.className = 'ticket';
 
+        // MongoDB uses _id, SQLite uses id. Handle both.
+        const ticketId = t._id || t.id;
+
         let adminControls = '';
         if (isAdmin) {
             adminControls = `
             <div class="admin-actions">
-                <input type="text" id="resp-${t.id}" placeholder="Admin response" value="${t.response || ''}">
-                <button onclick="resolveByAdmin(${t.id})">Resolve/Update</button>
+                <input type="text" id="resp-${ticketId}" placeholder="Admin response" value="${t.response || ''}">
+                <button onclick="resolveByAdmin('${ticketId}')">Resolve/Update</button>
             </div>`;
         }
 
         div.innerHTML = `
-            <button class="delete-btn" onclick="deleteTicket(${t.id})" title="Delete Ticket">X</button>
+            <button class="delete-btn" onclick="deleteTicket('${ticketId}')" title="Delete Ticket">X</button>
             <div class="ticket-header">
-                <strong>#${t.id} - ${t.user}</strong>
+                <strong>#${ticketId.toString().slice(-4)} - ${t.user}</strong>
                 <span class="status ${t.status}">${t.status}</span>
             </div>
             <p>${t.issue}</p>

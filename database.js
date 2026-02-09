@@ -1,27 +1,40 @@
-const sqlite3 = require('sqlite3').verbose();
-const { open } = require('sqlite');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-async function openDb() {
-    return open({
-        filename: './database.db',
-        driver: sqlite3.Database
-    });
-}
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('MongoDB Connected...');
+    } catch (err) {
+        console.error(err.message);
+        // Exit process with failure
+        process.exit(1);
+    }
+};
 
-async function initDb() {
-    const db = await openDb();
-    await db.exec(`
-    CREATE TABLE IF NOT EXISTS tickets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user TEXT NOT NULL,
-      issue TEXT NOT NULL,
-      status TEXT DEFAULT 'Open',
-      response TEXT,
-      created_at INTEGER DEFAULT (cast(strftime('%s','now') as int))
-    )
-  `);
-    console.log('Connected to SQLite database and initialized tables.');
-    return db;
-}
+const TicketSchema = new mongoose.Schema({
+    user: {
+        type: String,
+        required: true
+    },
+    issue: {
+        type: String,
+        required: true
+    },
+    status: {
+        type: String,
+        default: 'Open'
+    },
+    response: {
+        type: String
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
+    }
+});
 
-module.exports = { openDb, initDb };
+// Create model. Note: 'Ticket' will map to 'tickets' collection in MongoDB
+const Ticket = mongoose.model('Ticket', TicketSchema);
+
+module.exports = { connectDB, Ticket };
